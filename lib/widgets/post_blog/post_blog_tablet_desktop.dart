@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blog_site/constants/app_color.dart';
 
 class PostBlogTabletDesktop extends StatelessWidget {
   final String title;
@@ -9,7 +10,7 @@ class PostBlogTabletDesktop extends StatelessWidget {
     return Container( 
       padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 15),
       decoration: BoxDecoration(
-        color: Colors.blue,
+        color: primaryColor,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(

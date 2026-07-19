@@ -15,7 +15,7 @@ class NavBarMobile extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.menu),
             onPressed: () {
-              // Handle menu button press
+              Scaffold.of(context).openDrawer();
             },
           ),
           NavBarLogo(),

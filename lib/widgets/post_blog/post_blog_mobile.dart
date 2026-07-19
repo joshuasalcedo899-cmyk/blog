@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:blog_site/constants/app_color.dart';
 
 class PostBlogMobile extends StatelessWidget {
   final String title;
@@ -10,7 +11,7 @@ class PostBlogMobile extends StatelessWidget {
       height: 60,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.blue,
+        color: primaryColor,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(title, 
