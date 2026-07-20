@@ -6,8 +6,8 @@ import 'package:blog_site/views/home/home_content_mobile.dart';
 import 'package:blog_site/views/home/home_content_desktop.dart';
 import 'package:blog_site/widgets/navigation_drawer/navigation_drawer.dart';
 
-class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
+class AboutView extends StatelessWidget {
+  const AboutView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class ProfileView extends StatelessWidget {
           child: Column(
             children: <Widget>[
               const NavBar(),
-              Text('Profile View'),
+              Text('About View'),
             ],
           ),
         ),

@@ -1,6 +1,8 @@
+import 'package:blog_site/constants/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_logo.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_item.dart';
+import 'package:go_router/go_router.dart';
 
 class NavigationBarTabletDesktop extends StatelessWidget {
   const NavigationBarTabletDesktop({super.key});
@@ -16,9 +18,9 @@ class NavigationBarTabletDesktop extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const NavBarItem('About'),
+              const NavBarItem('About', '/about'),
               SizedBox(width: 60),
-              const NavBarItem('Profile'),
+              const NavBarItem('Profile', '/profile'),
             ]
           )
         ],

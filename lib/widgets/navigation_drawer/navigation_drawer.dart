@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:blog_site/widgets/navigation_drawer/drawer_item.dart';
+import 'package:go_router/go_router.dart';
 import 'package:blog_site/widgets/navigation_drawer/navigation_drawer_header.dart';
 
 
@@ -21,8 +21,27 @@ class NavDrawer extends StatelessWidget {
           child: Column(
             children: <Widget>[
               NavigationDrawerHeader(),
-              DrawerItem(title: 'Profile', icon: Icons.person),
-              DrawerItem(title: 'About', icon: Icons.info),
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text("Home"),
+            onTap: () {
+              context.go("/");
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text("Profile"),
+            onTap: () {
+              context.go("/profile");
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.help),
+            title: const Text("About"),
+            onTap: () {
+              context.go("/about");
+            },
+          ),
             ]
           ),
       );

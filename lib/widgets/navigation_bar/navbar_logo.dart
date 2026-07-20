@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class NavBarLogo extends StatelessWidget {
   const NavBarLogo({super.key});
@@ -8,7 +9,9 @@ class NavBarLogo extends StatelessWidget {
     return SizedBox(
             height: 80,
             width: 150,
-            child: Image.asset('assets/blog.png')
+            child: IconButton(icon: Image.asset('assets/Blog.png'), 
+            style: ButtonStyle(overlayColor: WidgetStatePropertyAll(Colors.transparent),),
+            onPressed: () {context.go("/");},),
             );
   }
 }
