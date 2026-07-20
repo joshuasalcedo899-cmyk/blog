@@ -1,8 +1,6 @@
-import 'package:blog_site/constants/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_logo.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_item.dart';
-import 'package:go_router/go_router.dart';
 
 class NavigationBarTabletDesktop extends StatelessWidget {
   const NavigationBarTabletDesktop({super.key});

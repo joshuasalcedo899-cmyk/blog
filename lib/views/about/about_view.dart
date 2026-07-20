@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:blog_site/widgets/navigation_bar/navigation_bar.dart';
 import 'package:blog_site/widgets/centered_view/centered_view.dart';
-import 'package:blog_site/views/home/home_content_mobile.dart';
-import 'package:blog_site/views/home/home_content_desktop.dart';
 import 'package:blog_site/widgets/navigation_drawer/navigation_drawer.dart';
 
 class AboutView extends StatelessWidget {
