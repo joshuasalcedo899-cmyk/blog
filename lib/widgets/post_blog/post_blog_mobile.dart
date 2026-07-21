@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:blog_site/constants/app_color.dart';
+import 'package:go_router/go_router.dart';
 
 class PostBlogMobile extends StatelessWidget {
   final String title;
@@ -7,18 +8,16 @@ class PostBlogMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 60,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: primaryColor,
-        borderRadius: BorderRadius.circular(5),
+    return ElevatedButton(
+      onPressed: () => context.go('/create_blog'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.black,
+        minimumSize: const Size.fromHeight(60),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+        overlayColor: primaryColor,
       ),
-      child: Text(title, 
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w800),
-        ),
+      child: Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
     );
   }
 }
