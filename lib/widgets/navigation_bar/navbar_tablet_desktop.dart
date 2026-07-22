@@ -1,3 +1,4 @@
+import 'package:blog_site/constants/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_logo.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_item.dart';
@@ -7,8 +8,9 @@ class NavigationBarTabletDesktop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100,
+    return Container(
+      color: primaryColor,
+      height: 70,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[

@@ -25,6 +25,7 @@ class NavDrawer extends StatelessWidget {
             leading: const Icon(Icons.home),
             title: const Text("Home"),
             onTap: () {
+              context.pop();
               context.go("/");
             },
           ),
@@ -32,6 +33,7 @@ class NavDrawer extends StatelessWidget {
             leading: const Icon(Icons.person),
             title: const Text("Profile"),
             onTap: () {
+              context.pop();
               context.go("/profile");
             },
           ),
@@ -39,6 +41,7 @@ class NavDrawer extends StatelessWidget {
             leading: const Icon(Icons.help),
             title: const Text("About"),
             onTap: () {
+              context.pop();
               context.go("/about");
             },
           ),

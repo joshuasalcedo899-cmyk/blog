@@ -40,7 +40,7 @@ class _CreateBlogViewState extends State<CreateBlogView> {
                 "Create Blog",
                 style: TextStyle(
                   fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
 
@@ -66,7 +66,7 @@ class _CreateBlogViewState extends State<CreateBlogView> {
               const SizedBox(height: 24),
 
               FilledButton.icon(
-                style: FilledButton.styleFrom(overlayColor: const Color.fromARGB(255, 16, 92, 153), backgroundColor: primaryColor),
+                style: FilledButton.styleFrom(overlayColor: const Color.fromARGB(255, 16, 92, 153), backgroundColor: primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(5))),
                 onPressed: _pickImages,
                 icon: const Icon(Icons.photo_library),
                 label: const Text("Add Photos"),
@@ -116,13 +116,18 @@ class _CreateBlogViewState extends State<CreateBlogView> {
 
               const SizedBox(height: 40),
 
-              SizedBox(
-                width: double.infinity,
+              Container(
+                alignment: Alignment.center,
                 child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
+                    backgroundColor: primaryColor, 
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(5),)),
                   onPressed: () {
                     // Upload to Supabase
                   },
-                  child: const Text("Publish Blog"),
+                  child: const Text("Publish Blog", style: TextStyle(color: Colors.black)),
                 ),
               ),
             ],
