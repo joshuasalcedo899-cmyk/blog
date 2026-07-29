@@ -1,4 +1,3 @@
-import 'package:blog_site/constants/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_logo.dart';
 import 'package:blog_site/widgets/navigation_bar/navbar_item.dart';
@@ -9,8 +8,9 @@ class NavigationBarTabletDesktop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: primaryColor,
+      width:  double.infinity,
       height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
@@ -18,9 +18,8 @@ class NavigationBarTabletDesktop extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const NavBarItem('About', '/about'),
-              SizedBox(width: 60),
               const NavBarItem('Profile', '/profile'),
+              SizedBox(width: 60),
             ]
           )
         ],

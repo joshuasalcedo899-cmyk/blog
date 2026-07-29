@@ -13,23 +13,22 @@ class MainLayout extends StatelessWidget {
     return ResponsiveBuilder(
       builder: (context, sizingInformation) {
         return Scaffold(
-          drawer: sizingInformation.deviceScreenType ==
-                  DeviceScreenType.mobile
+          drawer: sizingInformation.deviceScreenType == DeviceScreenType.mobile
               ? const NavDrawer()
               : null,
 
           backgroundColor: Colors.white,
 
-          body: CenteredView(
-            child: Column(
-              children: [
-                const NavBar(),
+          body: Column(
+            children: [
+              const NavBar(), // Full width
 
-                Expanded(
+              Expanded(
+                child: CenteredView(
                   child: child,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },

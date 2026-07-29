@@ -9,7 +9,7 @@ class NavBarLogo extends StatelessWidget {
     return SizedBox(
             height: 80,
             width: 150,
-            child: IconButton(icon: Image.asset('assets/Blog.png'), 
+            child: IconButton(icon: Image.asset('assets/logo.png'), 
             style: ButtonStyle(overlayColor: WidgetStatePropertyAll(Colors.transparent),),
             onPressed: () {context.go("/");},),
             );
