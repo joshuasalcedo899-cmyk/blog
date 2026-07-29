@@ -9,42 +9,41 @@ import 'package:go_router/go_router.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class RegisterView extends StatefulWidget {
+  const RegisterView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  State<RegisterView> createState() => _RegisterViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
-  final TextEditingController _emailController =
-      TextEditingController();
-
-  final TextEditingController _passwordController =
-      TextEditingController();
+class _RegisterViewState extends State<RegisterView> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _rememberMe = false;
   bool _isLoading = false;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _register() async {
     setState(() => _isLoading = true);
 
+    final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please enter your email and password.'),
+            content: Text('Please fill in your name, email, and password.'),
           ),
         );
         setState(() => _isLoading = false);
@@ -53,15 +52,37 @@ class _LoginViewState extends State<LoginView> {
     }
 
     try {
-      await Supabase.instance.client.auth.signInWithPassword(
+      final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
+        data: <String, dynamic>{
+          'name': name,
+        },
       );
 
-      await ProfileService.ensureProfileForCurrentUser();
+      final signedUpEmail = response.user?.email?.trim() ?? email;
+
+      if (signedUpEmail.isNotEmpty) {
+        await ProfileService.saveProfile(
+          name: name,
+          email: signedUpEmail,
+        );
+      }
 
       if (mounted) {
-        context.go("/home");
+        final hasSession = response.session != null;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              hasSession
+                  ? 'Account created successfully.'
+                  : 'Check your email to confirm your account.',
+            ),
+          ),
+        );
+
+        context.go(hasSession ? '/' : '/login');
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -86,27 +107,28 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  Widget _buildLoginCard() {
+  Widget _buildRegisterCard() {
     return AuthCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           const AuthHeader(
-            title: "Welcome Back",
+            title: "Create Account",
           ),
-
           const SizedBox(height: 35),
-
+          AuthTextField(
+            controller: _nameController,
+            label: "Name",
+            icon: Icons.person_outline,
+          ),
+          const SizedBox(height: 20),
           AuthTextField(
             controller: _emailController,
             label: "Email",
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
           ),
-
           const SizedBox(height: 20),
-
           TextField(
             controller: _passwordController,
             obscureText: _obscurePassword,
@@ -119,8 +141,7 @@ class _LoginViewState extends State<LoginView> {
               suffixIcon: IconButton(
                 onPressed: () {
                   setState(() {
-                    _obscurePassword =
-                        !_obscurePassword;
+                    _obscurePassword = !_obscurePassword;
                   });
                 },
                 icon: Icon(
@@ -132,109 +153,59 @@ class _LoginViewState extends State<LoginView> {
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(
                   color: Color(0xFFE2E8F0),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(
                   color: primaryColor,
                 ),
               ),
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-
-              Checkbox(
-                value: _rememberMe,
-                activeColor: primaryColor,
-                onChanged: (value) {
-                  setState(() {
-                    _rememberMe = value!;
-                  });
-                },
-              ),
-
-              const Text("Remember me"),
-
-              const Spacer(),
-
-              TextButton(
-                onPressed: () {
-                  // Forgot Password
-                },
-                child: const Text(
-                  "Forgot Password?",
-                ),
-              ),
-            ],
-          ),
-
           const SizedBox(height: 25),
-
           SizedBox(
             width: double.infinity,
             height: 55,
             child: FilledButton(
-              onPressed:
-                  _isLoading ? null : _login,
+              onPressed: _isLoading ? null : _register,
               style: FilledButton.styleFrom(
                 backgroundColor: buttonColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(16),
-                
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
               child: _isLoading
                   ? const SizedBox(
                       height: 22,
                       width: 22,
-                      child:
-                          CircularProgressIndicator(
+                      child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
                       ),
                     )
                   : const Text(
-                      "Sign In",
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
+                      "Sign Up",
+                      style: TextStyle(fontSize: 16),
                     ),
             ),
           ),
-
           const SizedBox(height: 24),
-
           Row(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
-              const Text(
-                "Don't have an account?",
-              ),
-
+              const Text("Already have an account?"),
               TextButton(
                 onPressed: () {
-                  context.go("/register");
+                  context.go("/login");
                 },
-                child: const Text(
-                  "Create one",
-                ),
+                child: const Text("Back to Login"),
               ),
             ],
           ),
@@ -247,17 +218,14 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     return ResponsiveBuilder(
       builder: (context, sizing) {
-
         if (sizing.isMobile) {
           return Scaffold(
-            backgroundColor:
-                const Color(0xFFF8FAFC),
+            backgroundColor: const Color(0xFFF8FAFC),
             body: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.all(24),
-                  child: _buildLoginCard(),
+                  padding: const EdgeInsets.all(24),
+                  child: _buildRegisterCard(),
                 ),
               ),
             ),
@@ -267,20 +235,14 @@ class _LoginViewState extends State<LoginView> {
         return Scaffold(
           body: Row(
             children: [
-
               const AuthSidePanel(),
-
               Expanded(
                 child: Container(
-                  color:
-                      const Color(0xFFF8FAFC),
+                  color: const Color(0xFFF8FAFC),
                   child: Center(
                     child: SingleChildScrollView(
-                      padding:
-                          const EdgeInsets.all(
-                        40,
-                      ),
-                      child: _buildLoginCard(),
+                      padding: const EdgeInsets.all(40),
+                      child: _buildRegisterCard(),
                     ),
                   ),
                 ),

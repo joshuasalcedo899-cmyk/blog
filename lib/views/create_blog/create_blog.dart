@@ -1,9 +1,10 @@
 import 'dart:typed_data';
-
 import 'package:blog_site/constants/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:responsive_builder/responsive_builder.dart';
+import 'package:blog_site/services/create_service.dart';
 
 class CreateBlogView extends StatefulWidget {
   const CreateBlogView({super.key});
@@ -11,6 +12,7 @@ class CreateBlogView extends StatefulWidget {
   @override
   State<CreateBlogView> createState() => _CreateBlogViewState();
 }
+
 
 class _CreateBlogViewState extends State<CreateBlogView> {
   static const List<String> _categories = <String>[
@@ -31,6 +33,8 @@ class _CreateBlogViewState extends State<CreateBlogView> {
   final List<XFile> selectedImages = <XFile>[];
 
   String _selectedCategory = _categories.first;
+  bool _isPublishing = false;
+
 
   @override
   void dispose() {
@@ -40,6 +44,8 @@ class _CreateBlogViewState extends State<CreateBlogView> {
     _tagsController.dispose();
     super.dispose();
   }
+
+  
 
   Future<void> _pickImages() async {
     final List<XFile> images = await _picker.pickMultiImage();
@@ -55,6 +61,69 @@ class _CreateBlogViewState extends State<CreateBlogView> {
     setState(() {
       selectedImages.remove(image);
     });
+  }
+
+  Future<void> _publishPost() async {
+    if (_isPublishing) {
+      return;
+    }
+
+    setState(() {
+      _isPublishing = true;
+    });
+
+    final title = _titleController.text.trim();
+    final subtitle = _excerptController.text.trim();
+    final content = _bodyController.text.trim();
+
+    if (title.isEmpty || content.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Title and content are required."),
+          ),
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _isPublishing = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final postId = await PostService.createPost(
+        title: title,
+        subtitle: subtitle,
+        content: content,
+        images: selectedImages,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Post published!"),
+          ),
+        );
+        context.go('/read_blog/$postId');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPublishing = false;
+        });
+      }
+    }
   }
 
   int get _wordCount {
@@ -398,7 +467,7 @@ class _CreateBlogViewState extends State<CreateBlogView> {
                   hintText: 'Start writing your article here...',
                 ),
               ),
-               const SizedBox(height: 18),
+              const SizedBox(height: 18),
               _buildCoverPlaceholder(),
               if (selectedImages.isNotEmpty) ...[
                 const SizedBox(height: 18),
@@ -407,12 +476,12 @@ class _CreateBlogViewState extends State<CreateBlogView> {
                   runSpacing: 14,
                   children: selectedImages.map(_buildImagePreview).toList(),
                 ),
+              ],
             ],
-          ]
           ),
-        )
-      ]
-    );     
+        ),
+      ],
+    );
   }
 
   Widget _buildSidebar() {
@@ -439,7 +508,7 @@ class _CreateBlogViewState extends State<CreateBlogView> {
               _buildStatChip('Photos', selectedImages.length.toString(), Icons.photo_library_outlined),
               const SizedBox(height: 20),
               FilledButton.icon(
-                onPressed: () {},
+                onPressed: _isPublishing ? null : _publishPost,
                 style: FilledButton.styleFrom(
                   backgroundColor: buttonColor,
                   foregroundColor: Colors.white,
@@ -448,7 +517,16 @@ class _CreateBlogViewState extends State<CreateBlogView> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                icon: const Icon(Icons.schedule_send),
+                icon: _isPublishing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.schedule_send),
                 label: const Text('Publish post'),
               ),
               const SizedBox(height: 12),

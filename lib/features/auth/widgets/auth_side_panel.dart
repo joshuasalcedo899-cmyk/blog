@@ -9,14 +9,7 @@ class AuthSidePanel extends StatelessWidget {
     return Expanded(
       child: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              primaryColor,
-              buttonColor2,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: buttonColor2,
         ),
         child: const Center(
           child: Padding(
@@ -31,7 +24,7 @@ class AuthSidePanel extends StatelessWidget {
                 ),
                 SizedBox(height: 30),
                 Text(
-                  "Share your ideas with the world.",
+                  "Share Your Adventure.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -44,7 +37,7 @@ class AuthSidePanel extends StatelessWidget {
                   "Create blogs, engage with readers, and build your personal brand with our blogging platform.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Colors.white,
                     fontSize: 16,
                     height: 1.6,
                   ),

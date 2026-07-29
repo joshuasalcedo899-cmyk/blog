@@ -11,7 +11,7 @@ class NavBarLogo extends StatelessWidget {
             width: 150,
             child: IconButton(icon: Image.asset('assets/logo.png'), 
             style: ButtonStyle(overlayColor: WidgetStatePropertyAll(Colors.transparent),),
-            onPressed: () {context.go("/");},),
+            onPressed: () {context.go("/home");},),
             );
   }
 }

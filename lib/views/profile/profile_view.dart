@@ -1,6 +1,6 @@
 import 'dart:typed_data';
-
 import 'package:blog_site/constants/app_color.dart';
+import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:responsive_builder/responsive_builder.dart';
@@ -16,27 +16,34 @@ class _ProfileViewState extends State<ProfileView> {
   final ImagePicker _picker = ImagePicker();
 
   XFile? selectedImage;
+  int? _profileId;
+  String? _profileAvatarUrl;
+  bool _isLoadingProfile = true;
+  bool _isSavingProfile = false;
 
   final TextEditingController _nameController =
-      TextEditingController(text: "Joshua Salcedo");
+      TextEditingController();
 
   final TextEditingController _usernameController =
-      TextEditingController(text: "@joshua");
+      TextEditingController();
 
   final TextEditingController _emailController =
-      TextEditingController(text: "joshua@email.com");
+      TextEditingController();
 
   final TextEditingController _bioController =
-      TextEditingController(
-        text:
-            "Passionate Flutter developer focused on creating clean, responsive, and user-friendly applications.",
-      );
+      TextEditingController();
 
   final TextEditingController _websiteController =
-      TextEditingController(text: "https://portfolio.com");
+      TextEditingController();
 
   final TextEditingController _locationController =
-      TextEditingController(text: "Laguna, Philippines");
+      TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
 
   @override
   void dispose() {
@@ -58,6 +65,114 @@ class _ProfileViewState extends State<ProfileView> {
       setState(() {
         selectedImage = image;
       });
+    }
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final profile = await ProfileService.fetchCurrentProfile();
+      final currentUser = ProfileService.currentUser;
+
+      if (!mounted) return;
+
+      setState(() {
+        final fallbackEmail = currentUser?.email?.trim() ?? '';
+        final fallbackName =
+            currentUser?.userMetadata?['name']?.toString().trim() ??
+                '';
+        final fallbackAvatar =
+            currentUser?.userMetadata?['avatar_url']?.toString().trim() ??
+                '';
+
+        final email =
+            profile?['email']?.toString().trim() ?? fallbackEmail;
+        final name =
+            profile?['name']?.toString().trim() ?? fallbackName;
+        final avatarUrl =
+            profile?['avatar_url']?.toString().trim() ??
+                fallbackAvatar;
+
+        _profileId = profile != null && profile['id'] is num
+            ? (profile['id'] as num).toInt()
+            : null;
+        _profileAvatarUrl = avatarUrl;
+
+        _nameController.text = name;
+        _emailController.text = email;
+        _usernameController.text = email.contains('@')
+            ? '@${email.split('@').first}'
+            : '';
+        _bioController.text = '';
+        _websiteController.text = '';
+        _locationController.text = '';
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingProfile = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (_isSavingProfile) {
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (email.isEmpty || name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Name and email are required."),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSavingProfile = true;
+    });
+
+    try {
+      final savedProfile = await ProfileService.saveProfile(
+        profileId: _profileId,
+        name: name,
+        email: email,
+        avatarUrl: _profileAvatarUrl,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _profileId = (savedProfile['id'] as num).toInt();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Profile updated."),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingProfile = false;
+        });
+      }
     }
   }
 
@@ -189,15 +304,25 @@ class _ProfileViewState extends State<ProfileView> {
         Widget avatar;
 
         if (selectedImage == null) {
-          avatar = const CircleAvatar(
-            radius: 55,
-            backgroundColor: Color(0xFFE2E8F0),
-            child: Icon(
-              Icons.person,
-              size: 60,
-              color: Colors.grey,
-            ),
-          );
+          final avatarUrl = _profileAvatarUrl?.trim();
+
+          if (avatarUrl != null && avatarUrl.isNotEmpty) {
+            avatar = CircleAvatar(
+              radius: 55,
+              backgroundColor: const Color(0xFFE2E8F0),
+              backgroundImage: NetworkImage(avatarUrl),
+            );
+          } else {
+            avatar = const CircleAvatar(
+              radius: 55,
+              backgroundColor: Color(0xFFE2E8F0),
+              child: Icon(
+                Icons.person,
+                size: 60,
+                color: Colors.grey,
+              ),
+            );
+          }
         } else if (!snapshot.hasData) {
           avatar = const CircleAvatar(
             radius: 55,
@@ -430,7 +555,9 @@ class _ProfileViewState extends State<ProfileView> {
 
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {},
+                  onPressed: _isLoadingProfile || _isSavingProfile
+                      ? null
+                      : _saveProfile,
                   style: FilledButton.styleFrom(
                     backgroundColor: buttonColor,
                     foregroundColor: Colors.white,
@@ -439,7 +566,16 @@ class _ProfileViewState extends State<ProfileView> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  icon: const Icon(Icons.save_outlined),
+                  icon: _isSavingProfile
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
                   label: const Text("Save Changes"),
                 ),
               ),
@@ -535,8 +671,16 @@ class _ProfileViewState extends State<ProfileView> {
       ],
     );
   }
-    @override
+  @override
   Widget build(BuildContext context) {
+    if (_isLoadingProfile) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return SizedBox(
       child: Stack(
         children: [

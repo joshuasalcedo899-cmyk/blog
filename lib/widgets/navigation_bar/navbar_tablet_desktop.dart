@@ -10,7 +10,7 @@ class NavigationBarTabletDesktop extends StatelessWidget {
     return Container(
       width:  double.infinity,
       height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: BorderSide.strokeAlignCenter),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
@@ -18,8 +18,7 @@ class NavigationBarTabletDesktop extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const NavBarItem('/profile'),
-              SizedBox(width: 60),
+              const NavBarItem('/profile')
             ]
           )
         ],
