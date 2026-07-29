@@ -15,7 +15,7 @@ class DrawerItem extends StatelessWidget {
         children: <Widget>[
           Icon(icon),
           const SizedBox(width: 30),
-          NavBarItem(title, route),
+          NavBarItem(route),
         ],
       ),
     );

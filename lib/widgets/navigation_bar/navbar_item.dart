@@ -3,15 +3,15 @@ import 'package:blog_site/constants/app_color.dart';
 import 'package:go_router/go_router.dart';
 
 class NavBarItem extends StatelessWidget {
-  final String title;
   final String route;
-  const NavBarItem(this.title, this.route, {super.key});
+  const NavBarItem(this.route, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-                style: TextButton.styleFrom(overlayColor: primaryColor, foregroundColor: Colors.black, ),
-                child: Text(
-                  title, style: TextStyle(fontSize: 18)), onPressed: () {context.go(route);},);
+    return IconButton(
+                style: IconButton.styleFrom(backgroundColor: buttonColor2, foregroundColor: Colors.white, ),
+                icon: Icon(Icons.person),
+                onPressed: () {context.go(route);},
+    );
   }
 }

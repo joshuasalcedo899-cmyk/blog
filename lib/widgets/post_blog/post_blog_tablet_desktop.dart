@@ -12,10 +12,10 @@ class PostBlogTabletDesktop extends StatelessWidget {
       onPressed: () => context.go('/create_blog'),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.black,
+        backgroundColor: buttonColor,
+        foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-        overlayColor: primaryColor,
+        overlayColor: buttonColor2,
       ),
       child: Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
         );

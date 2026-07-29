@@ -18,7 +18,7 @@ class NavigationBarTabletDesktop extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const NavBarItem('Profile', '/profile'),
+              const NavBarItem('/profile'),
               SizedBox(width: 60),
             ]
           )

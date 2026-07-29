@@ -1,9 +1,9 @@
-import 'package:blog_site/views/about/about_view.dart';
 import 'package:blog_site/views/create_blog/create_blog.dart';
 import 'package:blog_site/views/home/home_view.dart';
 import 'package:blog_site/views/profile/profile_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:blog_site/main_layout/main_layout.dart';
+import 'package:blog_site/features/auth/view/login_view.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [
@@ -23,11 +23,6 @@ final GoRouter appRouter = GoRouter(
         ),
 
         GoRoute(
-          path: '/about',
-          builder: (context, state) => const AboutView(),
-        ),
-
-        GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileView(),
         ),
@@ -35,6 +30,11 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/create_blog',
           builder: (context, state) => const CreateBlogView(),
+        ),
+
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginView(),
         ),
       ],
     ),
