@@ -15,7 +15,7 @@ class LandingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const AuthHeader(
-            title: "Welcome to"
+            title: "Welcome to Travelog."
           ),
           const SizedBox(height: 35),
           SizedBox(

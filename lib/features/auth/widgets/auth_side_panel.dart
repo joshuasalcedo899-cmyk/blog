@@ -11,17 +11,13 @@ class AuthSidePanel extends StatelessWidget {
         decoration: const BoxDecoration(
           color: buttonColor2,
         ),
-        child: const Center(
+        child: Center(
           child: Padding(
             padding: EdgeInsets.all(48),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.auto_stories_rounded,
-                  size: 120,
-                  color: Colors.white,
-                ),
+                Image.asset('assets/logo.png', width: 400, height: 90,),
                 SizedBox(height: 30),
                 Text(
                   "Share Your Adventure.",

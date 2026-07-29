@@ -22,8 +22,6 @@ Widget build(BuildContext context) {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(width: 8), // Space between text and icon
-        Image.asset('assets/logo.png',)
       ],
     ),
   );
