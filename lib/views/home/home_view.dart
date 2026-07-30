@@ -1,4 +1,5 @@
 import 'package:blog_site/constants/app_color.dart';
+import 'package:blog_site/router/routes.dart';
 import 'package:blog_site/services/create_service.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
@@ -228,7 +229,7 @@ class _HomeViewState extends State<HomeView> {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: postId.isEmpty ? null : () => context.go('/read_blog/$postId'),
+        onTap: postId.isEmpty ? null : () => context.go(Routes.readBlog(postId)),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -520,7 +521,7 @@ class _HomeViewState extends State<HomeView> {
             ),
             onPressed: card.latestPostId.isEmpty
                 ? null
-                : () => context.go('/read_blog/${card.latestPostId}'),
+                : () => context.go(Routes.readBlog(card.latestPostId)),
             child: const Text('Open latest story'),
           ),
         ],
@@ -533,6 +534,13 @@ class _HomeViewState extends State<HomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          FilledButton(
+            onPressed: () => { context.go(Routes.createBlog) },
+            child: const Text('Create Post'),
+          ),
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 8),
           const Text(
             'Other User Profiles',
             style: TextStyle(
@@ -604,7 +612,6 @@ class _HomeViewState extends State<HomeView> {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

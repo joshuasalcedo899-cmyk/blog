@@ -1,7 +1,8 @@
 import 'package:blog_site/constants/app_color.dart';
-import 'package:blog_site/features/auth/widgets/auth_card.dart';
-import 'package:blog_site/features/auth/widgets/auth_header.dart';
-import 'package:blog_site/features/auth/widgets/auth_side_panel.dart';
+import 'package:blog_site/router/routes.dart';
+import 'package:blog_site/widgets/auth/auth_card.dart';
+import 'package:blog_site/widgets/auth/auth_header.dart';
+import 'package:blog_site/widgets/auth/auth_side_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:responsive_builder/responsive_builder.dart';
@@ -23,7 +24,7 @@ class LandingView extends StatelessWidget {
             height: 55,
             child: FilledButton(
               onPressed: () {
-                context.go("/login");
+                context.go(Routes.login);
               },
               style: FilledButton.styleFrom(
                 backgroundColor: buttonColor,
@@ -43,7 +44,7 @@ class LandingView extends StatelessWidget {
             height: 55,
             child: OutlinedButton(
               onPressed: () {
-                context.go("/register");
+                context.go(Routes.register);
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: buttonColor,

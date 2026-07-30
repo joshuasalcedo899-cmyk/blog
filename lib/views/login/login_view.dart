@@ -1,8 +1,9 @@
 import 'package:blog_site/constants/app_color.dart';
-import 'package:blog_site/features/auth/widgets/auth_card.dart';
-import 'package:blog_site/features/auth/widgets/auth_header.dart';
-import 'package:blog_site/features/auth/widgets/auth_side_panel.dart';
-import 'package:blog_site/features/auth/widgets/auth_text_field.dart';
+import 'package:blog_site/router/routes.dart';
+import 'package:blog_site/widgets/auth/auth_card.dart';
+import 'package:blog_site/widgets/auth/auth_header.dart';
+import 'package:blog_site/widgets/auth/auth_side_panel.dart';
+import 'package:blog_site/widgets/auth/auth_text_field.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -61,7 +62,7 @@ class _LoginViewState extends State<LoginView> {
       await ProfileService.ensureProfileForCurrentUser();
 
       if (mounted) {
-        context.go("/home");
+        context.go(Routes.home);
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -110,6 +111,7 @@ class _LoginViewState extends State<LoginView> {
           TextField(
             controller: _passwordController,
             obscureText: _obscurePassword,
+            onSubmitted: _isLoading ? null : (_) => { _login() },
             decoration: InputDecoration(
               labelText: "Password",
               prefixIcon: const Icon(
@@ -230,7 +232,7 @@ class _LoginViewState extends State<LoginView> {
 
               TextButton(
                 onPressed: () {
-                  context.go("/register");
+                  context.go(Routes.register);
                 },
                 child: const Text(
                   "Create one",

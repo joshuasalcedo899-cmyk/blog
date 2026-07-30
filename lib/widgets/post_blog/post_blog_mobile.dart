@@ -1,3 +1,4 @@
+import 'package:blog_site/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/constants/app_color.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +10,7 @@ class PostBlogMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () => context.go('/create_blog'),
+      onPressed: () => context.go(Routes.createBlog),
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
         foregroundColor: Colors.black,

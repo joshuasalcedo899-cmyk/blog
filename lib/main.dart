@@ -6,9 +6,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  if (!isSupabaseConfigured) {
+    print("SUPABASE_URL and/or SUPABASE_ANON_KEY is not defined.");
+    return;
+  }
+
   await Supabase.initialize(
     url: supabaseUrl,
-    anonKey: supabaseAnonKey,
+    publishableKey: supabaseAnonKey,
   );
 
   runApp(const MyApp());

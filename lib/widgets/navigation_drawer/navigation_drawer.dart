@@ -1,3 +1,4 @@
+import 'package:blog_site/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:blog_site/widgets/navigation_drawer/navigation_drawer_header.dart';
@@ -26,7 +27,7 @@ class NavDrawer extends StatelessWidget {
             title: const Text("Home"),
             onTap: () {
               context.pop();
-              context.go("/");
+              context.go(Routes.root);
             },
           ),
           ListTile(
@@ -34,7 +35,7 @@ class NavDrawer extends StatelessWidget {
             title: const Text("Profile"),
             onTap: () {
               context.pop();
-              context.go("/profile");
+              context.go(Routes.profile);
             },
           ),
           ListTile(

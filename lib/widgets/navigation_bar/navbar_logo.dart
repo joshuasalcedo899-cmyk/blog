@@ -1,3 +1,4 @@
+import 'package:blog_site/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,7 +12,7 @@ class NavBarLogo extends StatelessWidget {
             width: 150,
             child: IconButton(icon: Image.asset('assets/logo.png'), 
             style: ButtonStyle(overlayColor: WidgetStatePropertyAll(Colors.transparent),),
-            onPressed: () {context.go("/home");},),
+            onPressed: () {context.go(Routes.home);},),
             );
   }
 }

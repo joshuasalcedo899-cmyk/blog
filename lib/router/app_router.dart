@@ -1,28 +1,29 @@
+import 'package:blog_site/router/routes.dart';
 import 'package:blog_site/views/create_blog/create_blog.dart';
 import 'package:blog_site/views/home/home_view.dart';
 import 'package:blog_site/views/profile/profile_view.dart';
 import 'package:blog_site/views/profile/profile-edit_view.dart';
 import 'package:blog_site/views/read_blog/read_blog.dart';
 import 'package:go_router/go_router.dart';
-import 'package:blog_site/main_layout/main_layout.dart';
-import 'package:blog_site/features/auth/view/login_view.dart';
-import 'package:blog_site/features/auth/view/landing_view.dart';
-import 'package:blog_site/features/auth/view/register_view.dart';
+import 'package:blog_site/views/main_layout.dart';
+import 'package:blog_site/views/login/login_view.dart';
+import 'package:blog_site/views/landing/landing_view.dart';
+import 'package:blog_site/views/register/register_view.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [
     GoRoute(
-      path: '/',
+      path: Routes.root,
       builder: (context, state) => const LandingView(),
     ),
 
     GoRoute(
-      path: '/login',
+      path: Routes.login,
       builder: (context, state) => const LoginView(),
     ),
 
     GoRoute(
-      path: '/register',
+      path: Routes.register,
       builder: (context, state) => const RegisterView(),
     ),
 
@@ -36,27 +37,27 @@ final GoRouter appRouter = GoRouter(
       routes: [
 
         GoRoute(
-          path: '/home',
+          path: Routes.home,
           builder: (context, state) => const HomeView(),
         ),
 
         GoRoute(
-          path: '/profile',
+          path: Routes.profile,
           builder: (context, state) => const ProfileView(),
         ),
 
         GoRoute(
-          path: '/profile-edit',
+          path: Routes.profileEdit,
           builder: (context, state) => const ProfileEditView(),
         ),
 
         GoRoute(
-          path: '/create_blog',
+          path: Routes.createBlog,
           builder: (context, state) => const CreateBlogView(),
         ),
 
         GoRoute(
-          path: '/read_blog/:postId',
+          path: Routes.readBlog(),
           builder: (context, state) {
             final postId = state.pathParameters['postId'] ?? '';
             return ReadBlogView(postId: postId);

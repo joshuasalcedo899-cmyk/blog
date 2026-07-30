@@ -1,3 +1,4 @@
+import 'package:blog_site/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:blog_site/constants/app_color.dart';
@@ -9,7 +10,7 @@ class PostBlogTabletDesktop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () => context.go('/create_blog'),
+      onPressed: () => context.go(Routes.createBlog),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
         backgroundColor: buttonColor,

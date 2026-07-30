@@ -1,8 +1,9 @@
 import 'package:blog_site/constants/app_color.dart';
-import 'package:blog_site/features/auth/widgets/auth_card.dart';
-import 'package:blog_site/features/auth/widgets/auth_header.dart';
-import 'package:blog_site/features/auth/widgets/auth_side_panel.dart';
-import 'package:blog_site/features/auth/widgets/auth_text_field.dart';
+import 'package:blog_site/router/routes.dart';
+import 'package:blog_site/widgets/auth/auth_card.dart';
+import 'package:blog_site/widgets/auth/auth_header.dart';
+import 'package:blog_site/widgets/auth/auth_side_panel.dart';
+import 'package:blog_site/widgets/auth/auth_text_field.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -82,7 +83,7 @@ class _RegisterViewState extends State<RegisterView> {
           ),
         );
 
-        context.go(hasSession ? '/' : '/login');
+        context.go(hasSession ? Routes.root : Routes.login);
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -203,7 +204,7 @@ class _RegisterViewState extends State<RegisterView> {
               const Text("Already have an account?"),
               TextButton(
                 onPressed: () {
-                  context.go("/login");
+                  context.go(Routes.login);
                 },
                 child: const Text("Back to Login"),
               ),

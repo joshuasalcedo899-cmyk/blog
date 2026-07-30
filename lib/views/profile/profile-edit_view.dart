@@ -1,4 +1,5 @@
 import 'package:blog_site/constants/app_color.dart';
+import 'package:blog_site/router/routes.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -421,7 +422,7 @@ class _ProfileViewState extends State<ProfileEditView> {
 
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go('/profile'),
+                  onPressed: () => context.go(Routes.profile),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF0F172A),
                     side: const BorderSide(

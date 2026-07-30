@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:blog_site/constants/app_color.dart';
+import 'package:blog_site/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
@@ -98,7 +99,7 @@ class _CreateBlogViewState extends State<CreateBlogView> {
             content: Text("Post published!"),
           ),
         );
-        context.go('/read_blog/$postId');
+        context.go(Routes.readBlog(postId));
       }
     } catch (e) {
       if (mounted) {

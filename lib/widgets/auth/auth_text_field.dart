@@ -20,6 +20,7 @@ class AuthTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      autofocus: true,
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,

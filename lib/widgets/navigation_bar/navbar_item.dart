@@ -1,3 +1,4 @@
+import 'package:blog_site/router/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/constants/app_color.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +27,7 @@ class NavBarItem extends StatelessWidget {
 
             
 
-            context.go('/login');
+            context.go(Routes.login);
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

@@ -1,4 +1,5 @@
 import 'package:blog_site/constants/app_color.dart';
+import 'package:blog_site/router/routes.dart';
 import 'package:blog_site/services/create_service.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
@@ -244,7 +245,7 @@ class _ProfileViewState extends State<ProfileView> {
             right: 0,
             child: IconButton(
               tooltip: 'Edit profile',
-              onPressed: () => context.go('/profile-edit'),
+              onPressed: () => context.go(Routes.profileEdit),
               icon: const Icon(Icons.edit_outlined),
             ),
           ),
@@ -270,7 +271,7 @@ class _ProfileViewState extends State<ProfileView> {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: postId.isEmpty ? null : () => context.go('/read_blog/$postId'),
+        onTap: postId.isEmpty ? null : () => context.go(Routes.readBlog(postId)),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -344,7 +345,7 @@ class _ProfileViewState extends State<ProfileView> {
                   foregroundColor: Colors.white,
                 ),
                 onPressed:
-                    postId.isEmpty ? null : () => context.go('/read_blog/$postId'),
+                    postId.isEmpty ? null : () => context.go(Routes.readBlog(postId)),
                 child: const Text('Open'),
               ),
             ],

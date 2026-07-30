@@ -1,4 +1,5 @@
 import 'package:blog_site/constants/app_color.dart';
+import 'package:blog_site/router/routes.dart';
 import 'package:blog_site/services/create_service.dart';
 import 'package:blog_site/services/delete_service.dart';
 import 'package:blog_site/services/profile_service.dart';
@@ -164,7 +165,7 @@ class _ReadBlogViewState extends State<ReadBlogView> {
         return;
       }
 
-      context.go('/login');
+      context.go(Routes.login);
       return;
     }
 
@@ -711,7 +712,7 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                         ),
                         const SizedBox(height: 14),
                         FilledButton(
-                          onPressed: () => context.go('/login'),
+                          onPressed: () => context.go(Routes.login),
                           child: const Text('Sign in'),
                         ),
                       ],
@@ -731,7 +732,7 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                       ),
                       const SizedBox(width: 16),
                       FilledButton(
-                        onPressed: () => context.go('/login'),
+                        onPressed: () => context.go(Routes.login),
                         child: const Text('Sign in'),
                       ),
                     ],
