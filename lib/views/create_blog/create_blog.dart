@@ -15,14 +15,6 @@ class CreateBlogView extends StatefulWidget {
 
 
 class _CreateBlogViewState extends State<CreateBlogView> {
-  static const List<String> _categories = <String>[
-    'Travel',
-    'Thought Leadership',
-    'Product Updates',
-    'Tutorial',
-    'Case Study',
-    'Opinion',
-  ];
 
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _titleController = TextEditingController();
@@ -32,7 +24,6 @@ class _CreateBlogViewState extends State<CreateBlogView> {
 
   final List<XFile> selectedImages = <XFile>[];
 
-  String _selectedCategory = _categories.first;
   bool _isPublishing = false;
 
 
@@ -404,57 +395,6 @@ class _CreateBlogViewState extends State<CreateBlogView> {
                   'Subtitle',
                   hintText: 'Summarize the post in one or two clear sentences',
                 ),
-              ),
-              const SizedBox(height: 16),
-              LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  final bool inlineLayout = constraints.maxWidth > 560;
-
-                  final Widget categoryField = DropdownButtonFormField<String>(
-                    initialValue: _selectedCategory,
-                    items: _categories
-                        .map(
-                          (String category) => DropdownMenuItem<String>(
-                            value: category,
-                            child: Text(category),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (String? value) {
-                      if (value == null) return;
-                      setState(() {
-                        _selectedCategory = value;
-                      });
-                    },
-                    decoration: _editorDecoration('Category'),
-                  );
-
-                  final Widget tagField = TextField(
-                    controller: _tagsController,
-                    decoration: _editorDecoration(
-                      'Tags',
-                      hintText: 'flutter, design, editorial',
-                    ),
-                  );
-
-                  if (inlineLayout) {
-                    return Row(
-                      children: [
-                        Expanded(child: categoryField),
-                        const SizedBox(width: 16),
-                        Expanded(child: tagField),
-                      ],
-                    );
-                  }
-
-                  return Column(
-                    children: [
-                      categoryField,
-                      const SizedBox(height: 16),
-                      tagField,
-                    ],
-                  );
-                },
               ),
               const SizedBox(height: 16),
               TextField(

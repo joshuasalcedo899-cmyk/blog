@@ -1,6 +1,7 @@
 import 'package:blog_site/views/create_blog/create_blog.dart';
 import 'package:blog_site/views/home/home_view.dart';
 import 'package:blog_site/views/profile/profile_view.dart';
+import 'package:blog_site/views/profile/profile-edit_view.dart';
 import 'package:blog_site/views/read_blog/read_blog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:blog_site/main_layout/main_layout.dart';
@@ -42,6 +43,11 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileView(),
+        ),
+
+        GoRoute(
+          path: '/profile-edit',
+          builder: (context, state) => const ProfileEditView(),
         ),
 
         GoRoute(

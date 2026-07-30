@@ -1,4 +1,6 @@
+import 'package:blog_site/constants/app_color.dart';
 import 'package:blog_site/services/create_service.dart';
+import 'package:blog_site/services/delete_service.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -17,12 +19,20 @@ class ReadBlogView extends StatefulWidget {
 }
 
 class _ReadBlogViewState extends State<ReadBlogView> {
-  late final Future<_ReadBlogData?> _detailFuture;
+  late Future<_ReadBlogData?> _detailFuture;
+  final TextEditingController _commentController = TextEditingController();
+  bool _isSubmittingComment = false;
 
   @override
   void initState() {
     super.initState();
     _detailFuture = _loadDetail();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   Future<_ReadBlogData?> _loadDetail() async {
@@ -39,12 +49,55 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     final author = authorId == null || authorId.isEmpty
         ? null
         : await ProfileService.fetchProfileById(authorId);
+    var comments = const <Map<String, dynamic>>[];
+    var commentsEnabled = true;
+    try {
+      comments = await PostService.fetchCommentsByPostId(widget.postId);
+    } catch (_) {
+      commentsEnabled = false;
+    }
+
+    final commentProfiles = commentsEnabled
+        ? await _loadCommentProfiles(comments)
+        : <String, Map<String, dynamic>?>{};
+    final commentItems = comments.map((comment) {
+      final commentAuthorId = comment['user_id']?.toString();
+      return _ReadCommentData(
+        comment: comment,
+        author: commentAuthorId == null || commentAuthorId.isEmpty
+            ? null
+            : commentProfiles[commentAuthorId],
+      );
+    }).toList();
 
     return _ReadBlogData(
       post: post,
       images: images,
       author: author,
+      comments: commentItems,
+      commentsEnabled: commentsEnabled,
     );
+  }
+
+  Future<Map<String, Map<String, dynamic>?>> _loadCommentProfiles(
+    List<Map<String, dynamic>> comments,
+  ) async {
+    final authorIds = comments
+        .map((comment) => comment['user_id']?.toString())
+        .where((value) => value != null && value.isNotEmpty)
+        .cast<String>()
+        .toSet();
+
+    final profiles = <String, Map<String, dynamic>?>{};
+    for (final authorId in authorIds) {
+      try {
+        profiles[authorId] = await ProfileService.fetchProfileById(authorId);
+      } catch (_) {
+        profiles[authorId] = null;
+      }
+    }
+
+    return profiles;
   }
 
   String _formatDate(dynamic value) {
@@ -102,6 +155,91 @@ class _ReadBlogViewState extends State<ReadBlogView> {
 
   bool _hasText(String? value) {
     return value != null && value.trim().isNotEmpty;
+  }
+
+  Future<void> _submitComment() async {
+    final currentUser = ProfileService.currentUser;
+    if (currentUser == null) {
+      if (!mounted) {
+        return;
+      }
+
+      context.go('/login');
+      return;
+    }
+
+    final content = _commentController.text.trim();
+    if (content.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isSubmittingComment = true;
+    });
+
+    try {
+      await PostService.createComment(
+        postId: widget.postId,
+        content: content,
+      );
+
+      _commentController.clear();
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _detailFuture = _loadDetail();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comment posted.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not post comment: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingComment = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteComment(String commentId) async {
+    if (commentId.isEmpty) {
+      return;
+    }
+
+    try {
+      await DeleteService().deleteById(table: 'comments', id: commentId);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _detailFuture = _loadDetail();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comment deleted.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not delete comment: $error')),
+      );
+    }
   }
 
   String _stringValue(dynamic value, {String fallback = ''}) {
@@ -494,6 +632,280 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     );
   }
 
+  Widget _buildCommentsSection(_ReadBlogData data) {
+    final comments = data.comments;
+    final currentUser = ProfileService.currentUser;
+
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                '${comments.length}',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Share your thoughts and start the conversation.',
+            style: TextStyle(
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 20),
+          if (!data.commentsEnabled)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Text(
+                'Comments are not available yet.',
+                style: TextStyle(
+                  color: Color(0xFF475569),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          else if (currentUser == null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isCompact = constraints.maxWidth < 520;
+
+                  if (isCompact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Sign in to leave a comment.',
+                          style: TextStyle(
+                            color: Color(0xFF334155),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        FilledButton(
+                          onPressed: () => context.go('/login'),
+                          child: const Text('Sign in'),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Sign in to leave a comment.',
+                          style: TextStyle(
+                            color: Color(0xFF334155),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      FilledButton(
+                        onPressed: () => context.go('/login'),
+                        child: const Text('Sign in'),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _commentController,
+                  minLines: 3,
+                  maxLines: 6,
+                  textInputAction: TextInputAction.newline,
+                  decoration: InputDecoration(
+                    hintText: 'Write a comment...',
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(color: Color(0xFF0F172A), width: 1.4),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(backgroundColor: buttonColor2),
+                    onPressed: _isSubmittingComment ? null : _submitComment,
+                    icon: _isSubmittingComment
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send_outlined),
+                    label: const Text('Post comment'),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 24),
+          if (comments.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Text(
+                'No comments yet. Be the first to share your thoughts.',
+                style: TextStyle(
+                  color: Color(0xFF475569),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: comments
+                  .map(
+                    (commentData) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: _buildCommentCard(commentData),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentCard(_ReadCommentData data) {
+    final comment = data.comment;
+    final author = data.author;
+    final currentUserId = ProfileService.currentUser?.id;
+    final commentUserId = _stringValue(comment['user_id']);
+    final canDelete = currentUserId != null && currentUserId == commentUserId;
+    final authorName = _stringValue(author?['name']);
+    final authorEmail = _stringValue(author?['email']);
+    final authorAvatar = _stringValue(author?['avatar_url']);
+    final createdAt = _formatDate(comment['created_at']);
+    final commentId = _stringValue(comment['id']);
+    final content = _stringValue(comment['content']);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: const Color(0xFFE2E8F0),
+            backgroundImage:
+                authorAvatar.isNotEmpty ? NetworkImage(authorAvatar) : null,
+            child: authorAvatar.isNotEmpty
+                ? null
+                : const Icon(Icons.person, color: Colors.grey),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        authorName.isNotEmpty ? authorName : 'Unknown reader',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      createdAt,
+                      style: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                if (authorEmail.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    authorEmail,
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    color: Color(0xFF334155),
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (canDelete)
+            IconButton(
+              tooltip: 'Delete comment',
+              onPressed: () => _deleteComment(commentId),
+              icon: const Icon(Icons.delete_outline),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _detailRow(String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -569,7 +981,7 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                           _buildHero(context, data, isMobile),
                           const SizedBox(height: 24),
                           if (isMobile) ...[
-                          _buildArticleCard(_stringValue(data.post['content'])),
+                            _buildArticleCard(_stringValue(data.post['content'])),
                             const SizedBox(height: 20),
                             _buildImageGallery(data.images),
                             const SizedBox(height: 20),
@@ -595,6 +1007,8 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                                 ),
                               ],
                             ),
+                          const SizedBox(height: 24),
+                          _buildCommentsSection(data),
                           const SizedBox(height: 32),
                         ],
                       ),
@@ -614,10 +1028,24 @@ class _ReadBlogData {
   final Map<String, dynamic> post;
   final List<Map<String, dynamic>> images;
   final Map<String, dynamic>? author;
+  final List<_ReadCommentData> comments;
+  final bool commentsEnabled;
 
   const _ReadBlogData({
     required this.post,
     required this.images,
+    required this.author,
+    required this.comments,
+    required this.commentsEnabled,
+  });
+}
+
+class _ReadCommentData {
+  final Map<String, dynamic> comment;
+  final Map<String, dynamic>? author;
+
+  const _ReadCommentData({
+    required this.comment,
     required this.author,
   });
 }

@@ -58,6 +58,30 @@ class PostService {
     return supabase.from('posts').select().eq('id', postId).maybeSingle();
   }
 
+  static Future<List<Map<String, dynamic>>> fetchRecentPosts({
+    int limit = 12,
+  }) async {
+    final List<dynamic> rows = await supabase
+        .from('posts')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchPostsByUserId(
+    String userId,
+  ) async {
+    final List<dynamic> rows = await supabase
+        .from('posts')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+
+    return rows.cast<Map<String, dynamic>>();
+  }
+
   static Future<List<Map<String, dynamic>>> fetchPostImagesByPostId(
     String postId,
   ) async {
@@ -68,6 +92,40 @@ class PostService {
         .order('created_at');
 
     return rows.cast<Map<String, dynamic>>();
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchCommentsByPostId(
+    String postId,
+  ) async {
+    final List<dynamic> rows = await supabase
+        .from('comments')
+        .select()
+        .eq('post_id', postId)
+        .order('created_at', ascending: false);
+
+    return rows.cast<Map<String, dynamic>>();
+  }
+
+  static Future<Map<String, dynamic>> createComment({
+    required String postId,
+    required String content,
+  }) async {
+    final user = supabase.auth.currentUser;
+
+    if (user == null) {
+      throw StateError('User not logged in.');
+    }
+
+    final trimmedContent = content.trim();
+    if (trimmedContent.isEmpty) {
+      throw ArgumentError('Comment cannot be empty.');
+    }
+
+    return supabase.from('comments').insert({
+      'post_id': postId,
+      'user_id': user.id,
+      'content': trimmedContent,
+    }).select().single();
   }
 
   static Future<Map<String, dynamic>?> fetchPostDetail(String postId) async {
