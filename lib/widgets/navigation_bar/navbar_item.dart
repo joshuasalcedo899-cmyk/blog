@@ -1,3 +1,4 @@
+import 'package:blog_site/widgets/post_blog/post_blog.dart';
 import 'package:flutter/material.dart';
 import 'package:blog_site/constants/app_color.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,8 @@ class NavBarItem extends StatelessWidget {
     return SizedBox(
       child : Row(
         children: <Widget> [
+          PostBlog(title: 'Post Blog'),
+          SizedBox(width: 30,),
           IconButton(
                     style: IconButton.styleFrom(backgroundColor: buttonColor2, foregroundColor: Colors.white, ),
                     icon: Icon(Icons.person),

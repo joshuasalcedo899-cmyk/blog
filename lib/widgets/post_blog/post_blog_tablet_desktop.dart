@@ -8,16 +8,17 @@ class PostBlogTabletDesktop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return ElevatedButton.icon(
       onPressed: () => context.go('/create_blog'),
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
         backgroundColor: buttonColor,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         overlayColor: buttonColor2,
       ),
-      child: Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      label: Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+      icon: Icon(Icons.add),
         );
   }
 }
