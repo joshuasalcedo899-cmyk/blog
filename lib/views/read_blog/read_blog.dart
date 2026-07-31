@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:blog_site/constants/app_color.dart';
 import 'package:blog_site/services/create_service.dart';
 import 'package:blog_site/services/delete_service.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
 class ReadBlogView extends StatefulWidget {
@@ -21,6 +24,7 @@ class ReadBlogView extends StatefulWidget {
 class _ReadBlogViewState extends State<ReadBlogView> {
   late Future<_ReadBlogData?> _detailFuture;
   final TextEditingController _commentController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
   bool _isSubmittingComment = false;
 
   @override
@@ -212,6 +216,532 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     }
   }
 
+  Future<void> _editPost(_ReadBlogData data) async {
+    final post = data.post;
+    final titleController =
+        TextEditingController(text: _stringValue(post['title']));
+    final subtitleController = TextEditingController(
+      text: _stringValue(
+        post['subtitle'],
+        fallback: _buildSubtitle(post),
+      ),
+    );
+    final contentController =
+        TextEditingController(text: _stringValue(post['content']));
+    final existingImages = List<Map<String, dynamic>>.from(data.images);
+    final removedImages = <Map<String, dynamic>>[];
+    final pendingImages = <XFile>[];
+    bool isSaving = false;
+    bool dialogClosed = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !isSaving,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              title: const Text('Edit post'),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: 520,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: titleController,
+                        decoration: _dialogDecoration('Title'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: subtitleController,
+                        decoration: _dialogDecoration('Subtitle'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: contentController,
+                        minLines: 6,
+                        maxLines: 12,
+                        decoration: _dialogDecoration('Content'),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildPostImageEditor(
+                        existingImages: existingImages,
+                        pendingImages: pendingImages,
+                        isSaving: isSaving,
+                        onAddImages: () async {
+                          final pickedImages = await _imagePicker.pickMultiImage();
+                          if (pickedImages.isEmpty) {
+                            return;
+                          }
+
+                          if (!mounted || dialogClosed) {
+                            return;
+                          }
+
+                          dialogSetState(() {
+                            pendingImages.addAll(pickedImages);
+                          });
+                        },
+                        onRemoveExistingImage: (image) {
+                          dialogSetState(() {
+                            existingImages.remove(image);
+                            removedImages.add(image);
+                          });
+                        },
+                        onRemovePendingImage: (image) {
+                          dialogSetState(() {
+                            pendingImages.remove(image);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: buttonColor),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final title = titleController.text.trim();
+                          final subtitle = subtitleController.text.trim();
+                          final content = contentController.text.trim();
+
+                          if (title.isEmpty || subtitle.isEmpty || content.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Title, subtitle, and content are required.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          dialogSetState(() {
+                            isSaving = true;
+                          });
+
+                          try {
+                            final imagesToDelete =
+                                List<Map<String, dynamic>>.from(removedImages);
+                            final imagesToAdd = List<XFile>.from(pendingImages);
+
+                            await PostService.updatePost(
+                              postId: widget.postId,
+                              title: title,
+                              content: content,
+                              subtitle: subtitle,
+                            );
+
+                            for (final image in imagesToDelete) {
+                              final imageId = _stringValue(image['id']);
+                              if (imageId.isEmpty) {
+                                continue;
+                              }
+
+                              await PostService.deletePostImage(
+                                imageId: imageId,
+                                imageUrl: _stringValue(image['image_url']),
+                              );
+                            }
+
+                            if (imagesToAdd.isNotEmpty) {
+                              await PostService.addPostImages(
+                                postId: widget.postId,
+                                images: imagesToAdd,
+                              );
+                            }
+
+                            if (!mounted) {
+                              return;
+                            }
+
+                            setState(() {
+                              _detailFuture = _loadDetail();
+                            });
+
+                            dialogClosed = true;
+                            Navigator.of(dialogContext).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Post updated.')),
+                            );
+                          } catch (error) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not update post: $error'),
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted && !dialogClosed) {
+                              dialogSetState(() {
+                                isSaving = false;
+                              });
+                            }
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    titleController.dispose();
+    subtitleController.dispose();
+    contentController.dispose();
+  }
+
+  Future<void> _editComment({
+    required String commentId,
+    required String currentContent,
+  }) async {
+    final commentController =
+        TextEditingController(text: currentContent);
+    bool isSaving = false;
+    bool dialogClosed = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !isSaving,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              title: const Text('Edit comment'),
+              content: SizedBox(
+                width: 480,
+                child: TextField(
+                  controller: commentController,
+                  minLines: 4,
+                  maxLines: 8,
+                  decoration: _dialogDecoration('Comment'),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: buttonColor),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final content = commentController.text.trim();
+                          if (content.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Comment cannot be empty.'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          dialogSetState(() {
+                            isSaving = true;
+                          });
+
+                          try {
+                            await PostService.updateComment(
+                              commentId: commentId,
+                              content: content,
+                            );
+
+                            if (!mounted) {
+                              return;
+                            }
+
+                            setState(() {
+                              _detailFuture = _loadDetail();
+                            });
+
+                            dialogClosed = true;
+                            Navigator.of(dialogContext).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Comment updated.')),
+                            );
+                          } catch (error) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not update comment: $error'),
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted && !dialogClosed) {
+                              dialogSetState(() {
+                                isSaving = false;
+                              });
+                            }
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    commentController.dispose();
+  }
+
+  Widget _buildPostImageEditor({
+    required List<Map<String, dynamic>> existingImages,
+    required List<XFile> pendingImages,
+    required bool isSaving,
+    required Future<void> Function() onAddImages,
+    required void Function(Map<String, dynamic> image) onRemoveExistingImage,
+    required void Function(XFile image) onRemovePendingImage,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Post images',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                '${existingImages.length + pendingImages.length}',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      try {
+                        await onAddImages();
+                      } catch (error) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Could not add images: $error'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+              style: FilledButton.styleFrom(
+                backgroundColor: buttonColor,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Add images'),
+            ),
+          ),
+          if (existingImages.isEmpty && pendingImages.isEmpty) ...[
+            const SizedBox(height: 14),
+            const Text(
+              'No images yet. Add one or more photos for this post.',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+          if (existingImages.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'Uploaded images',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: existingImages.map((image) {
+                final imageUrl = _stringValue(image['image_url']);
+                return _buildRemoteImageTile(
+                  imageUrl: imageUrl,
+                  onRemove: isSaving ? null : () => onRemoveExistingImage(image),
+                );
+              }).toList(),
+            ),
+          ],
+          if (pendingImages.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'New images',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: pendingImages.map((image) {
+                return _buildLocalImageTile(
+                  image: image,
+                  onRemove: isSaving ? null : () => onRemovePendingImage(image),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageTile({
+    required Widget child,
+    required VoidCallback? onRemove,
+  }) {
+    return SizedBox(
+      width: 160,
+      height: 132,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            child,
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.45),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Remove image',
+                  onPressed: onRemove,
+                  icon: const Icon(
+                    Icons.close,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRemoteImageTile({
+    required String imageUrl,
+    required VoidCallback? onRemove,
+  }) {
+    return _buildImageTile(
+      onRemove: onRemove,
+      child: imageUrl.isEmpty
+          ? Container(
+              color: const Color(0xFFE2E8F0),
+              alignment: Alignment.center,
+              child: const Icon(Icons.image_outlined, color: Color(0xFF64748B)),
+            )
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFE2E8F0),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.broken_image_outlined),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildLocalImageTile({
+    required XFile image,
+    required VoidCallback? onRemove,
+  }) {
+    return _buildImageTile(
+      onRemove: onRemove,
+      child: FutureBuilder<Uint8List>(
+        future: image.readAsBytes(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Container(
+              color: const Color(0xFFE2E8F0),
+              alignment: Alignment.center,
+              child: const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          }
+
+          return Image.memory(
+            snapshot.data!,
+            fit: BoxFit.cover,
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _deleteComment(String commentId) async {
     if (commentId.isEmpty) {
       return;
@@ -262,6 +792,10 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     final authorName = _stringValue(data.author?['name']);
     final authorEmail = _stringValue(data.author?['email']);
     final authorAvatar = _stringValue(data.author?['avatar_url']);
+    final currentUserId = ProfileService.currentUser?.id;
+    final postAuthorId = _stringValue(data.post['user_id']);
+    final canEditPost =
+        currentUserId != null && currentUserId == postAuthorId;
     final hasAuthorAvatar = _hasText(authorAvatar);
     final displayAuthorName = _hasText(authorName)
         ? authorName
@@ -299,9 +833,9 @@ class _ReadBlogViewState extends State<ReadBlogView> {
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color.fromARGB(220, 2, 6, 23),
-                    Color.fromARGB(150, 15, 23, 42),
-                    Color.fromARGB(35, 15, 23, 42),
+                    Color.fromARGB(180, 52, 73, 94),
+                    Color.fromARGB(140, 118, 215, 196),
+                    Color.fromARGB(35, 255, 255, 255),
                   ],
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
@@ -316,8 +850,8 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    CircleAvatar(
+                        backgroundColor: buttonColor2.withValues(alpha: 0.9),
                         foregroundColor: Colors.white,
                         child: IconButton(
                           onPressed: () => context.pop(),
@@ -325,6 +859,13 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                         ),
                       ),
                       const Spacer(),
+                      if (canEditPost)
+                        _heroActionButton(
+                          icon: Icons.edit_outlined,
+                          label: 'Edit post',
+                          onPressed: () => _editPost(data),
+                        ),
+                      if (canEditPost) const SizedBox(width: 12),
                       _heroChip(
                         icon: Icons.schedule_outlined,
                         label: '${_readTime(content)} min read',
@@ -391,7 +932,7 @@ class _ReadBlogViewState extends State<ReadBlogView> {
                 bottom: 20,
                 child: CircleAvatar(
                   radius: 28,
-                  backgroundColor: Colors.white.withValues(alpha: 0.12),
+                  backgroundColor: primaryColor.withValues(alpha: 0.16),
                   backgroundImage: NetworkImage(authorAvatar),
                 ),
               ),
@@ -406,9 +947,9 @@ class _ReadBlogViewState extends State<ReadBlogView> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF0F172A),
-            Color(0xFF1E293B),
-            Color(0xFF334155),
+            Color(0xFF34495E),
+            Color(0xFF5D6D7E),
+            Color(0xFF76D7C4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -425,9 +966,9 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: buttonColor2.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -446,6 +987,27 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     );
   }
 
+  Widget _heroActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: primaryColor.withValues(alpha: 0.22),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+    );
+  }
+
   Widget _buildCard({
     required Widget child,
   }) {
@@ -453,14 +1015,14 @@ class _ReadBlogViewState extends State<ReadBlogView> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.98),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFE5ECF4)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
-            color: Color.fromARGB(18, 15, 23, 42),
-            blurRadius: 28,
-            offset: Offset(0, 14),
+            color: Color.fromARGB(14, 15, 23, 42),
+            blurRadius: 24,
+            offset: Offset(0, 12),
           ),
         ],
       ),
@@ -511,6 +1073,27 @@ class _ReadBlogViewState extends State<ReadBlogView> {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  InputDecoration _dialogDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      labelStyle: const TextStyle(color: Color(0xFF64748B)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: primaryColor, width: 1.4),
       ),
     );
   }
@@ -823,6 +1406,7 @@ class _ReadBlogViewState extends State<ReadBlogView> {
     final currentUserId = ProfileService.currentUser?.id;
     final commentUserId = _stringValue(comment['user_id']);
     final canDelete = currentUserId != null && currentUserId == commentUserId;
+    final canEdit = canDelete;
     final authorName = _stringValue(author?['name']);
     final authorEmail = _stringValue(author?['email']);
     final authorAvatar = _stringValue(author?['avatar_url']);
@@ -895,6 +1479,15 @@ class _ReadBlogViewState extends State<ReadBlogView> {
               ],
             ),
           ),
+          if (canEdit)
+            IconButton(
+              tooltip: 'Edit comment',
+              onPressed: () => _editComment(
+                commentId: commentId,
+                currentContent: content,
+              ),
+              icon: const Icon(Icons.edit_outlined),
+            ),
           if (canDelete)
             IconButton(
               tooltip: 'Delete comment',

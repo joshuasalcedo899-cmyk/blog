@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:blog_site/constants/app_color.dart';
 import 'package:blog_site/services/profile_service.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,7 @@ class _ProfileViewState extends State<ProfileEditView> {
   final ImagePicker _picker = ImagePicker();
 
   XFile? selectedImage;
-  int? _profileId;
+  String? _profileId;
   String? _profileAvatarUrl;
   bool _isLoadingProfile = true;
   bool _isSavingProfile = false;
@@ -24,19 +26,7 @@ class _ProfileViewState extends State<ProfileEditView> {
   final TextEditingController _nameController =
       TextEditingController();
 
-  final TextEditingController _usernameController =
-      TextEditingController();
-
   final TextEditingController _emailController =
-      TextEditingController();
-
-  final TextEditingController _bioController =
-      TextEditingController();
-
-  final TextEditingController _websiteController =
-      TextEditingController();
-
-  final TextEditingController _locationController =
       TextEditingController();
 
   @override
@@ -48,11 +38,7 @@ class _ProfileViewState extends State<ProfileEditView> {
   @override
   void dispose() {
     _nameController.dispose();
-    _usernameController.dispose();
     _emailController.dispose();
-    _bioController.dispose();
-    _websiteController.dispose();
-    _locationController.dispose();
 
     super.dispose();
   }
@@ -92,19 +78,11 @@ class _ProfileViewState extends State<ProfileEditView> {
             profile?['avatar_url']?.toString().trim() ??
                 fallbackAvatar;
 
-        _profileId = profile != null && profile['id'] is num
-            ? (profile['id'] as num).toInt()
-            : null;
+        _profileId = profile?['id']?.toString();
         _profileAvatarUrl = avatarUrl;
 
         _nameController.text = name;
         _emailController.text = email;
-        _usernameController.text = email.contains('@')
-            ? '@${email.split('@').first}'
-            : '';
-        _bioController.text = '';
-        _websiteController.text = '';
-        _locationController.text = '';
       });
     } catch (e) {
       debugPrint(e.toString());
@@ -139,11 +117,20 @@ class _ProfileViewState extends State<ProfileEditView> {
     });
 
     try {
+      String? avatarUrlToSave = _profileAvatarUrl;
+
+      if (selectedImage != null) {
+        avatarUrlToSave = await ProfileService.uploadAvatarImage(
+          selectedImage!,
+          previousAvatarUrl: _profileAvatarUrl,
+        );
+      }
+
       final savedProfile = await ProfileService.saveProfile(
         profileId: _profileId,
         name: name,
         email: email,
-        avatarUrl: _profileAvatarUrl,
+        avatarUrl: avatarUrlToSave,
       );
 
       if (!mounted) {
@@ -151,7 +138,10 @@ class _ProfileViewState extends State<ProfileEditView> {
       }
 
       setState(() {
-        _profileId = (savedProfile['id'] as num).toInt();
+        _profileId = savedProfile['id']?.toString();
+        _profileAvatarUrl = savedProfile['avatar_url']?.toString().trim() ??
+            avatarUrlToSave;
+        selectedImage = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -272,117 +262,21 @@ class _ProfileViewState extends State<ProfileEditView> {
 
           const SizedBox(height: 28),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              bool desktop = constraints.maxWidth > 650;
+          _buildAvatarSection(),
 
-              if (desktop) {
-                return Column(
-                  children: [
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _nameController,
-                            decoration: _editorDecoration("Full Name"),
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-
-                        const SizedBox(width: 18),
-
-                        Expanded(
-                          child: TextField(
-                            controller: _usernameController,
-                            decoration: _editorDecoration("Username"),
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _emailController,
-                            decoration: _editorDecoration("Email"),
-                          ),
-                        ),
-
-                        const SizedBox(width: 18),
-
-                        Expanded(
-                          child: TextField(
-                            controller: _locationController,
-                            decoration: _editorDecoration("Location"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              }
-
-              return Column(
-                children: [
-
-                  TextField(
-                    controller: _nameController,
-                    decoration: _editorDecoration("Full Name"),
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  TextField(
-                    controller: _usernameController,
-                    decoration: _editorDecoration("Username"),
-                    onChanged: (_) => setState(() {}),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  TextField(
-                    controller: _emailController,
-                    decoration: _editorDecoration("Email"),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  TextField(
-                    controller: _locationController,
-                    decoration: _editorDecoration("Location"),
-                  ),
-                ],
-              );
-            },
-          ),
-
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
 
           TextField(
-            controller: _websiteController,
-            decoration: _editorDecoration(
-              "Website",
-              hintText: "https://example.com",
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          TextField(
-            controller: _bioController,
-            maxLines: 5,
+            controller: _nameController,
+            decoration: _editorDecoration("Full Name"),
             onChanged: (_) => setState(() {}),
-            decoration: _editorDecoration(
-              "Bio",
-              hintText: "Tell readers about yourself...",
-              maxLines: 5,
-            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          TextField(
+            controller: _emailController,
+            decoration: _editorDecoration("Email"),
           ),
 
           const SizedBox(height: 30),
@@ -439,6 +333,163 @@ class _ProfileViewState extends State<ProfileEditView> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarSection() {
+    final currentAvatar = _profileAvatarUrl?.trim() ?? '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _buildAvatarPreview(),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Profile photo',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  selectedImage == null
+                      ? (currentAvatar.isEmpty
+                          ? 'Add a photo to make your profile feel more personal.'
+                          : 'Update your current profile photo anytime.')
+                      : 'New avatar selected. Save changes to apply it.',
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: _isLoadingProfile || _isSavingProfile
+                          ? null
+                          : _pickImage,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: buttonColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: const Icon(Icons.photo_camera_outlined),
+                      label: Text(
+                        currentAvatar.isEmpty ? 'Add avatar' : 'Change avatar',
+                      ),
+                    ),
+                    if (selectedImage != null)
+                      OutlinedButton.icon(
+                        onPressed: _isLoadingProfile || _isSavingProfile
+                            ? null
+                            : () {
+                                setState(() {
+                                  selectedImage = null;
+                                });
+                              },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0F172A),
+                          side: const BorderSide(color: Color(0xFFD0D7E2)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: const Icon(Icons.close),
+                        label: const Text('Remove selection'),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarPreview() {
+    final selected = selectedImage;
+    final currentAvatar = _profileAvatarUrl?.trim() ?? '';
+
+    Widget child;
+
+    if (selected != null) {
+      child = FutureBuilder<Uint8List>(
+        future: selected.readAsBytes(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const SizedBox(
+              width: 76,
+              height: 76,
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          }
+
+          return Image.memory(
+            snapshot.data!,
+            fit: BoxFit.cover,
+            width: 76,
+            height: 76,
+          );
+        },
+      );
+    } else if (currentAvatar.isNotEmpty) {
+      child = Image.network(
+        currentAvatar,
+        fit: BoxFit.cover,
+        width: 76,
+        height: 76,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.person, color: Colors.grey);
+        },
+      );
+    } else {
+      child = const Icon(Icons.person, color: Colors.grey, size: 32);
+    }
+
+    return Container(
+      width: 92,
+      height: 92,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF34495E),
+            Color(0xFF76D7C4),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          color: Colors.white,
+          alignment: Alignment.center,
+          child: child,
+        ),
       ),
     );
   }

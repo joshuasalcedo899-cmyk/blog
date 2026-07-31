@@ -64,6 +64,7 @@ class _RegisterViewState extends State<RegisterView> {
 
       if (signedUpEmail.isNotEmpty) {
         await ProfileService.saveProfile(
+          profileId: response.user?.id,
           name: name,
           email: signedUpEmail,
         );
