@@ -26,7 +26,7 @@ class NavDrawer extends StatelessWidget {
             title: const Text("Home"),
             onTap: () {
               context.pop();
-              context.go("/");
+              context.go("/home");
             },
           ),
           ListTile(
@@ -35,14 +35,6 @@ class NavDrawer extends StatelessWidget {
             onTap: () {
               context.pop();
               context.go("/profile");
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.help),
-            title: const Text("About"),
-            onTap: () {
-              context.pop();
-              context.go("/about");
             },
           ),
             ]
