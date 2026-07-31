@@ -41,22 +41,13 @@ class _ProfileViewState extends State<ProfileView> {
     final name = profile?['name']?.toString().trim() ?? fallbackName;
     final avatarUrl =
         profile?['avatar_url']?.toString().trim() ?? fallbackAvatar;
-    final bio = profile?['bio']?.toString().trim() ?? '';
-    final joinedLabel = _formatDate(profile?['created_at']);
 
     return _ProfilePageData(
       profile: profile,
       posts: posts,
       name: name.isNotEmpty ? name : 'Unknown user',
       email: email,
-      username: email.contains('@') ? '@${email.split('@').first}' : '@user',
       avatarUrl: avatarUrl,
-      bio: bio.isNotEmpty
-          ? bio
-          : posts.isEmpty
-              ? 'No published blogs yet.'
-              : 'Published ${posts.length} blog${posts.length == 1 ? '' : 's'}.',
-      joinedLabel: joinedLabel,
     );
   }
 
@@ -198,40 +189,6 @@ class _ProfileViewState extends State<ProfileView> {
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF0F172A),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        data.username,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        data.bio,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.6,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _buildStatChip(
-                            'Posts',
-                            data.posts.length.toString(),
-                            Icons.article_outlined,
-                          ),
-                          _buildStatChip(
-                            'Joined',
-                            data.joinedLabel,
-                            Icons.calendar_today_outlined,
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -407,63 +364,6 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildSidebar(_ProfilePageData data) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildSectionCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Profile Statistics',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildStatChip(
-                'Posts',
-                data.posts.length.toString(),
-                Icons.article_outlined,
-              ),
-              const SizedBox(height: 12),
-              _buildStatChip(
-                'Joined',
-                data.joinedLabel,
-                Icons.calendar_today_outlined,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        _buildSectionCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'About',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: 14),
-              Text(
-                'Your published blogs appear in the main section, and readers can open each one from here.',
-                style: TextStyle(
-                  height: 1.7,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_ProfilePageData>(
@@ -515,7 +415,6 @@ class _ProfileViewState extends State<ProfileView> {
                             children: [
                               _buildPublishedBlogsSection(data),
                               const SizedBox(height: 20),
-                              _buildSidebar(data),
                             ],
                           );
                         },
@@ -525,7 +424,6 @@ class _ProfileViewState extends State<ProfileView> {
                             children: [
                               _buildPublishedBlogsSection(data),
                               const SizedBox(height: 20),
-                              _buildSidebar(data),
                             ],
                           );
                         },
@@ -538,10 +436,6 @@ class _ProfileViewState extends State<ProfileView> {
                                 child: _buildPublishedBlogsSection(data),
                               ),
                               const SizedBox(width: 24),
-                              Expanded(
-                                flex: 3,
-                                child: _buildSidebar(data),
-                              ),
                             ],
                           );
                         },
@@ -564,19 +458,13 @@ class _ProfilePageData {
   final List<Map<String, dynamic>> posts;
   final String name;
   final String email;
-  final String username;
   final String avatarUrl;
-  final String bio;
-  final String joinedLabel;
 
   const _ProfilePageData({
     required this.profile,
     required this.posts,
     required this.name,
     required this.email,
-    required this.username,
     required this.avatarUrl,
-    required this.bio,
-    required this.joinedLabel,
   });
 }

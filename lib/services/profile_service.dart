@@ -6,6 +6,10 @@ class ProfileService {
   static User? get currentUser => _client.auth.currentUser;
   static const String _avatarBucket = 'profile_avatars';
 
+  static Map<String, dynamic> _rowToProfile(Map<String, dynamic> row) {
+    return Map<String, dynamic>.from(row);
+  }
+
   static String _displayNameFromUser(User user) {
     final metadata = user.userMetadata ?? const <String, dynamic>{};
     final rawName = metadata['name'];
@@ -36,9 +40,18 @@ class ProfileService {
 
   static Future<Map<String, dynamic>?> fetchCurrentProfile() async {
     final user = _client.auth.currentUser;
-    final email = user?.email?.trim();
 
-    if (user == null || email == null || email.isEmpty) {
+    if (user == null) {
+      return null;
+    }
+
+    final profileById = await fetchProfileById(user.id);
+    if (profileById != null) {
+      return profileById;
+    }
+
+    final email = user.email?.trim();
+    if (email == null || email.isEmpty) {
       return null;
     }
 
@@ -53,7 +66,8 @@ class ProfileService {
       throw StateError('No authenticated user found.');
     }
 
-    final existingProfile = await fetchProfileByEmail(email);
+    final existingProfile =
+        await fetchProfileById(user.id) ?? await fetchProfileByEmail(email);
     if (existingProfile != null) {
       final existingName = existingProfile['name']?.toString().trim();
       if (existingName == null || existingName.isEmpty) {
@@ -69,6 +83,7 @@ class ProfileService {
     }
 
     return saveProfile(
+      profileId: user.id,
       name: _displayNameFromUser(user),
       email: email,
     );
@@ -95,11 +110,51 @@ class ProfileService {
       'updated_at': DateTime.now().toIso8601String(),
     };
 
-    return _client
-        .from('profiles')
-        .upsert(payload, onConflict: 'id')
-        .select()
-        .single();
+    final profileById = await fetchProfileById(resolvedProfileId);
+    if (profileById != null) {
+      final row = await _client
+          .from('profiles')
+          .update(payload)
+          .eq('id', resolvedProfileId)
+          .select()
+          .single();
+      return _rowToProfile(Map<String, dynamic>.from(row));
+    }
+
+    try {
+      final row = await _client
+          .from('profiles')
+          .insert(payload)
+          .select()
+          .single();
+      return _rowToProfile(Map<String, dynamic>.from(row));
+    } on PostgrestException catch (error) {
+      if (error.code != '23505') {
+        rethrow;
+      }
+
+      final existingProfile =
+          await fetchProfileById(resolvedProfileId) ?? await fetchProfileByEmail(email);
+      if (existingProfile == null) {
+        rethrow;
+      }
+
+      final existingId = existingProfile['id']?.toString();
+      if (existingId == null || existingId.isEmpty) {
+        rethrow;
+      }
+
+      final row = await _client
+          .from('profiles')
+          .update({
+            ...payload,
+            'id': existingId,
+          })
+          .eq('id', existingId)
+          .select()
+          .single();
+      return _rowToProfile(Map<String, dynamic>.from(row));
+    }
   }
 
   static String? _storagePathFromPublicUrl(String? imageUrl) {
