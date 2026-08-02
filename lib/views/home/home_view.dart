@@ -22,15 +22,9 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future<_HomeFeedData> _loadFeed() async {
-    final currentUser = ProfileService.currentUser;
-    final posts = await PostService.fetchRecentPosts(limit: 10);
-    final visiblePosts = currentUser == null
-        ? posts
-        : posts
-            .where((post) => _stringValue(post['user_id']) != currentUser.id)
-            .toList();
+    final posts = await PostService.fetchFeedPosts();
 
-    final authorIds = visiblePosts
+    final authorIds = posts
         .map((post) => post['user_id']?.toString())
         .where((value) => value != null && value.isNotEmpty)
         .cast<String>()
@@ -53,7 +47,7 @@ class _HomeViewState extends State<HomeView> {
     };
 
     final feedPosts = await Future.wait(
-      visiblePosts.map((post) async {
+      posts.map((post) async {
         final postId = _stringValue(post['id']);
         final authorId = _stringValue(post['user_id']);
 
@@ -75,9 +69,9 @@ class _HomeViewState extends State<HomeView> {
     );
 
     final authorCards = <String, _HomeProfileCard>{};
-    for (final post in visiblePosts) {
+    for (final post in posts) {
       final authorId = _stringValue(post['user_id']);
-      if (authorId.isEmpty || authorId == currentUser?.id) {
+      if (authorId.isEmpty) {
         continue;
       }
 
@@ -221,7 +215,7 @@ class _HomeViewState extends State<HomeView> {
     final excerpt = subtitle.isNotEmpty
         ? subtitle
         : (content.isEmpty
-            ? 'A fresh story from the blog editor.'
+            ? 'A new post from the feed.'
             : content.replaceAll('\n', ' ').split(' ').take(28).join(' '));
 
     return Material(
@@ -386,7 +380,7 @@ class _HomeViewState extends State<HomeView> {
             children: [
               const Expanded(
                 child: Text(
-                  'Latest Stories',
+                  'Feed',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -404,7 +398,7 @@ class _HomeViewState extends State<HomeView> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Published blogs from different users, ordered by newest first.',
+            'All published posts from every user, ordered by newest first.',
             style: TextStyle(color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 24),
@@ -521,7 +515,7 @@ class _HomeViewState extends State<HomeView> {
             onPressed: card.latestPostId.isEmpty
                 ? null
                 : () => context.go('/read_blog/${card.latestPostId}'),
-            child: const Text('Open latest story'),
+            child: const Text('Open latest post'),
           ),
         ],
       ),
@@ -534,7 +528,7 @@ class _HomeViewState extends State<HomeView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Other User Profiles',
+            'Writer Profiles',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -542,7 +536,7 @@ class _HomeViewState extends State<HomeView> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Writers who are publishing stories on the platform.',
+            'Writers who are publishing posts on the platform.',
             style: TextStyle(color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 24),

@@ -134,16 +134,23 @@ class PostService {
     await supabase.from('post_images').delete().eq('id', imageId);
   }
 
-  static Future<List<Map<String, dynamic>>> fetchRecentPosts({
-    int limit = 12,
+  static Future<List<Map<String, dynamic>>> fetchFeedPosts({
+    int? limit,
   }) async {
-    final List<dynamic> rows = await supabase
+    final query = supabase
         .from('posts')
         .select()
-        .order('created_at', ascending: false)
-        .limit(limit);
+        .order('created_at', ascending: false);
+
+    final List<dynamic> rows = limit == null ? await query : await query.limit(limit);
 
     return rows.cast<Map<String, dynamic>>();
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchRecentPosts({
+    int limit = 12,
+  }) {
+    return fetchFeedPosts(limit: limit);
   }
 
   static Future<List<Map<String, dynamic>>> fetchPostsByUserId(
