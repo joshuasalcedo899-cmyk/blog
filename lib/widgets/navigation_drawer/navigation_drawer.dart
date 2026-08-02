@@ -1,3 +1,4 @@
+import 'package:blog_site/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:blog_site/widgets/navigation_drawer/navigation_drawer_header.dart';
@@ -26,7 +27,7 @@ class NavDrawer extends StatelessWidget {
             title: const Text("Home"),
             onTap: () {
               context.pop();
-              context.go("/");
+              context.go("/home");
             },
           ),
           ListTile(
@@ -38,11 +39,24 @@ class NavDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.help),
-            title: const Text("About"),
-            onTap: () {
-              context.pop();
-              context.go("/about");
+            leading: const Icon(Icons.logout),
+            title: const Text("Logout"),
+            onTap: () async {
+              try{
+                await AuthService().logout();
+
+                if (!context.mounted) return;
+                context.pop();
+                context.go("/login");
+              }
+              catch (e){
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to logout: $e'),
+                  ),
+                );
+                debugPrint("Failed to logout: $e");
+              }
             },
           ),
             ]

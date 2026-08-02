@@ -125,7 +125,7 @@ class _ProfileViewState extends State<ProfileEditView> {
           previousAvatarUrl: _profileAvatarUrl,
         );
       }
-
+      context.go('/profile');
       final savedProfile = await ProfileService.saveProfile(
         profileId: _profileId,
         name: name,
