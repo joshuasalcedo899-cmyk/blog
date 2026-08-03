@@ -396,11 +396,6 @@ class _HomeViewState extends State<HomeView> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'All published posts from every user, ordered by newest first.',
-            style: TextStyle(color: Color(0xFF64748B)),
-          ),
           const SizedBox(height: 24),
           if (data.posts.isEmpty)
             Container(
